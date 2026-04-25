@@ -14,7 +14,8 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-const dbPath = path.resolve(__dirname, 'database.sqlite');
+// Gunakan process.env.DB_PATH untuk Railway Persistent Volume, default ke database.sqlite lokal
+const dbPath = process.env.DB_PATH || path.resolve(__dirname, 'database.sqlite');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) console.error('Error opening db', err);
   else {
@@ -95,6 +96,26 @@ app.post('/api/login', (req, res) => {
     if (err) return res.status(500).json({ error: err.message });
     if (row) res.json(row);
     else res.status(401).json({ error: 'Invalid credentials' });
+  });
+});
+
+// REGISTER
+app.post('/api/register', (req, res) => {
+  const { username, password, name } = req.body;
+  if (!username || !password || !name) {
+    return res.status(400).json({ error: 'Semua field (username, password, nama) harus diisi' });
+  }
+
+  db.get('SELECT id FROM users WHERE username = ?', [username], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (row) return res.status(400).json({ error: 'Username sudah digunakan' });
+
+    db.run('INSERT INTO users (username, password, role, name) VALUES (?, ?, ?, ?)',
+      [username, password, 'user', name], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID, username, role: 'user', name });
+      }
+    );
   });
 });
 

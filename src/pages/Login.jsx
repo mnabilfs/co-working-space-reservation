@@ -1,22 +1,28 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, User, KeyRound } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Building2, User, KeyRound, Type } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Login() {
+  const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
+      const url = isLogin ? 'http://localhost:5000/api/login' : 'http://localhost:5000/api/register';
+      const body = isLogin ? { username, password } : { username, password, name };
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify(body)
       });
+      
       if (response.ok) {
         const user = await response.json();
         // Simpan info user di local storage untuk dipakai nanti
@@ -25,7 +31,7 @@ export default function Login() {
         else navigate('/user');
       } else {
         const err = await response.json();
-        setError(err.error || 'Invalid username or password');
+        setError(err.error || (isLogin ? 'Invalid username or password' : 'Gagal mendaftar'));
       }
     } catch (error) {
       setError('Koneksi ke server gagal. Pastikan server backend menyala.');
@@ -48,10 +54,38 @@ export default function Login() {
             <Building2 size={32} />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">CoWork Space</h1>
-          <p className="text-gray-500 text-sm mt-1 text-center">Reservasi Ruang Kerja Anda dengan Mudah</p>
+          <p className="text-gray-500 text-sm mt-1 text-center">
+            {isLogin ? 'Reservasi Ruang Kerja Anda dengan Mudah' : 'Daftar Akun Baru untuk Memulai'}
+          </p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <AnimatePresence>
+            {!isLogin && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                <div className="relative mb-4">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <Type size={18} />
+                  </div>
+                  <input 
+                    type="text" 
+                    className="w-full pl-10 pr-4 py-3 bg-white/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-warm-400 focus:border-transparent outline-none transition-all"
+                    placeholder="Masukkan nama lengkap"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required={!isLogin}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
             <div className="relative">
@@ -64,6 +98,7 @@ export default function Login() {
                 placeholder="Masukkan username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                required
               />
             </div>
           </div>
@@ -80,6 +115,7 @@ export default function Login() {
                 placeholder="Masukkan password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
           </div>
@@ -88,11 +124,26 @@ export default function Login() {
 
           <button 
             type="submit" 
-            className="w-full py-3 px-4 bg-gradient-to-r from-warm-500 to-warm-600 text-white font-medium rounded-xl hover:from-warm-600 hover:to-warm-700 focus:outline-none focus:ring-2 focus:ring-warm-500 shadow-lg shadow-warm-500/30 transition-all active:scale-[0.98]"
+            className="w-full py-3 px-4 mt-2 bg-gradient-to-r from-warm-500 to-warm-600 text-white font-medium rounded-xl hover:from-warm-600 hover:to-warm-700 focus:outline-none focus:ring-2 focus:ring-warm-500 shadow-lg shadow-warm-500/30 transition-all active:scale-[0.98]"
           >
-            Sign In
+            {isLogin ? 'Sign In' : 'Daftar Sekarang'}
           </button>
         </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            {isLogin ? "Belum punya akun? " : "Sudah punya akun? "}
+            <button 
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError('');
+              }}
+              className="text-warm-600 font-semibold hover:text-warm-700 focus:outline-none"
+            >
+              {isLogin ? "Register di sini" : "Login di sini"}
+            </button>
+          </p>
+        </div>
       </motion.div>
     </div>
   );
