@@ -14,7 +14,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const url = isLogin ? 'http://localhost:5000/api/login' : 'http://localhost:5000/api/register';
+      const url = isLogin ? 'https://coworking-backend-ewaq.onrender.com/api/login' : 'https://coworking-backend-ewaq.onrender.com/api/register';
       const body = isLogin ? { username, password } : { username, password, name };
 
       const response = await fetch(url, {

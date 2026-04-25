@@ -24,9 +24,9 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     try {
       const [spacesRes, resRes, usersRes] = await Promise.all([
-        fetch('http://localhost:5000/api/spaces', { cache: 'no-store' }),
-        fetch('http://localhost:5000/api/reservations', { cache: 'no-store' }),
-        fetch('http://localhost:5000/api/users', { cache: 'no-store' })
+        fetch('https://coworking-backend-ewaq.onrender.com/api/spaces', { cache: 'no-store' }),
+        fetch('https://coworking-backend-ewaq.onrender.com/api/reservations', { cache: 'no-store' }),
+        fetch('https://coworking-backend-ewaq.onrender.com/api/users', { cache: 'no-store' })
       ]);
       setSpaces(await spacesRes.json());
       setReservations(await resRes.json());
@@ -45,7 +45,7 @@ export default function AdminDashboard() {
   const toggleSpaceStatus = async (space) => {
     const newStatus = space.status === 'Available' ? 'Booked' : 'Available';
     try {
-      await fetch(`http://localhost:5000/api/spaces/${space.id}`, {
+      await fetch(`https://coworking-backend-ewaq.onrender.com/api/spaces/${space.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...space, status: newStatus })
@@ -57,7 +57,7 @@ export default function AdminDashboard() {
   const handleDeleteSpace = async (id) => {
     if(window.confirm('Apakah Anda yakin ingin menghapus ruangan ini?')) {
       try {
-        await fetch(`http://localhost:5000/api/spaces/${id}`, { method: 'DELETE' });
+        await fetch(`https://coworking-backend-ewaq.onrender.com/api/spaces/${id}`, { method: 'DELETE' });
         fetchData();
       } catch (err) { console.error(err); }
     }
@@ -79,13 +79,13 @@ export default function AdminDashboard() {
     e.preventDefault();
     try {
       if (editingSpace) {
-        await fetch(`http://localhost:5000/api/spaces/${editingSpace.id}`, {
+        await fetch(`https://coworking-backend-ewaq.onrender.com/api/spaces/${editingSpace.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
         });
       } else {
-        await fetch('http://localhost:5000/api/spaces', {
+        await fetch('https://coworking-backend-ewaq.onrender.com/api/spaces', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
@@ -99,7 +99,7 @@ export default function AdminDashboard() {
   // ---- RESERVATION ACTIONS ----
   const updateReservationStatus = async (res, newStatus) => {
     try {
-      await fetch(`http://localhost:5000/api/reservations/${res.id}`, {
+      await fetch(`https://coworking-backend-ewaq.onrender.com/api/reservations/${res.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
