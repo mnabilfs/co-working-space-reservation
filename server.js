@@ -195,9 +195,10 @@ app.get('/api/users', async (req, res) => {
   res.json(data);
 });
 
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+// Hanya jalankan app.listen jika TIDAK di environment Vercel Serverless
+if (!process.env.VERCEL) {
   app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
   });
 }
 
