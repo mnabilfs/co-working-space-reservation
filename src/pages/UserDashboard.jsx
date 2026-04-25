@@ -44,7 +44,7 @@ export default function UserDashboard() {
 
   const fetchSpaces = async () => {
     try {
-      const res = await fetch('https://coworking-backend-ewaq.onrender.com/api/spaces', { cache: 'no-store' });
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/spaces`, { cache: 'no-store' });
       const data = await res.json();
       setSpaces(data);
     } catch (err) {
@@ -54,7 +54,7 @@ export default function UserDashboard() {
 
   const fetchMyReservations = async () => {
     try {
-      const res = await fetch(`https://coworking-backend-ewaq.onrender.com/api/reservations/user/${user.id}`, { cache: 'no-store' });
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/reservations/user/${user.id}`, { cache: 'no-store' });
       const data = await res.json();
       setMyReservations(data);
     } catch (err) {
@@ -65,7 +65,7 @@ export default function UserDashboard() {
   const fetchBookedSlots = async (spaceId, date) => {
     console.log('Fetching booked slots for:', spaceId, date);
     try {
-      const res = await fetch(`https://coworking-backend-ewaq.onrender.com/api/reservations/booked-slots?spaceId=${spaceId}&date=${date}&_t=${Date.now()}`, { cache: 'no-store' });
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/reservations/booked-slots?spaceId=${spaceId}&date=${date}&_t=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
       console.log('Received booked slots:', data);
       setBookedSlots(Array.isArray(data) ? data : []);
@@ -127,7 +127,7 @@ export default function UserDashboard() {
   const confirmBooking = async () => {
     if (!bookingDate || selectedSlots.length === 0) return;
     try {
-      await fetch('https://coworking-backend-ewaq.onrender.com/api/reservations', {
+      await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/reservations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

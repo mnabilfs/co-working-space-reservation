@@ -14,7 +14,8 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const url = isLogin ? 'https://coworking-backend-ewaq.onrender.com/api/login' : 'https://coworking-backend-ewaq.onrender.com/api/register';
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const url = isLogin ? `${API_URL}/api/login` : `${API_URL}/api/register`;
       const body = isLogin ? { username, password } : { username, password, name };
 
       const response = await fetch(url, {
