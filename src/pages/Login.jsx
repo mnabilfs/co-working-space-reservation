@@ -61,7 +61,7 @@ export default function Login() {
               <input 
                 type="text" 
                 className="w-full pl-10 pr-4 py-3 bg-white/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-warm-400 focus:border-transparent outline-none transition-all"
-                placeholder="admin or user"
+                placeholder="Masukkan username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
@@ -77,7 +77,7 @@ export default function Login() {
               <input 
                 type="password" 
                 className="w-full pl-10 pr-4 py-3 bg-white/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-warm-400 focus:border-transparent outline-none transition-all"
-                placeholder="password"
+                placeholder="Masukkan password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />

@@ -24,9 +24,9 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     try {
       const [spacesRes, resRes, usersRes] = await Promise.all([
-        fetch('http://localhost:5000/api/spaces'),
-        fetch('http://localhost:5000/api/reservations'),
-        fetch('http://localhost:5000/api/users')
+        fetch('http://localhost:5000/api/spaces', { cache: 'no-store' }),
+        fetch('http://localhost:5000/api/reservations', { cache: 'no-store' }),
+        fetch('http://localhost:5000/api/users', { cache: 'no-store' })
       ]);
       setSpaces(await spacesRes.json());
       setReservations(await resRes.json());
@@ -97,8 +97,7 @@ export default function AdminDashboard() {
   };
 
   // ---- RESERVATION ACTIONS ----
-  const toggleReservationStatus = async (res) => {
-    const newStatus = res.status === 'Confirmed' ? 'Cancelled' : 'Confirmed';
+  const updateReservationStatus = async (res, newStatus) => {
     try {
       await fetch(`http://localhost:5000/api/reservations/${res.id}`, {
         method: 'PUT',
@@ -109,8 +108,25 @@ export default function AdminDashboard() {
     } catch (err) { console.error(err); }
   };
 
-  const getSpaceName = (id) => spaces.find(s => s.id === id)?.name || 'Unknown Space';
-  const getUserName = (id) => users.find(u => u.id === id)?.name || 'Unknown User';
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'Pending': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      case 'Confirmed': return 'bg-green-50 text-green-700 border-green-200';
+      case 'Cancelled': return 'bg-red-50 text-red-700 border-red-200';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'Pending': return 'Menunggu Konfirmasi';
+      case 'Confirmed': return 'Dikonfirmasi';
+      case 'Cancelled': return 'Dibatalkan';
+      default: return status;
+    }
+  };
+
+  const pendingCount = reservations.filter(r => r.status === 'Pending').length;
 
   return (
     <div className="min-h-screen flex bg-gray-50">
@@ -130,9 +146,14 @@ export default function AdminDashboard() {
             </button>
             <button 
               onClick={() => setActiveTab('reservasi')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'reservasi' ? 'text-warm-600 bg-warm-50' : 'text-gray-600 hover:bg-gray-50'}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors relative ${activeTab === 'reservasi' ? 'text-warm-600 bg-warm-50' : 'text-gray-600 hover:bg-gray-50'}`}
             >
               <CalendarCheck size={20} /> Reservasi
+              {pendingCount > 0 && (
+                <span className="ml-auto w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {pendingCount}
+                </span>
+              )}
             </button>
             <button 
               onClick={() => setActiveTab('pengguna')}
@@ -176,6 +197,11 @@ export default function AdminDashboard() {
               <p className="text-sm text-gray-500">Total Reservasi</p>
               <p className="text-2xl font-bold text-gray-900">{reservations.length}</p>
             </div>
+            {pendingCount > 0 && (
+              <div className="ml-auto px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
+                {pendingCount} Pending
+              </div>
+            )}
           </div>
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 cursor-pointer" onClick={() => setActiveTab('pengguna')}>
             <div className="w-12 h-12 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center"><Users size={24} /></div>
@@ -244,39 +270,87 @@ export default function AdminDashboard() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-gray-100">
               <h2 className="text-lg font-bold text-gray-900">Daftar Reservasi</h2>
+              <p className="text-sm text-gray-500 mt-1">Kelola status booking dari pengguna. Ubah status untuk mengonfirmasi atau membatalkan.</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-gray-600">
                 <thead className="bg-gray-50/50 text-gray-500 font-medium">
                   <tr>
-                    <th className="px-6 py-4">ID Res.</th>
+                    <th className="px-6 py-4">ID</th>
                     <th className="px-6 py-4">Pengguna</th>
                     <th className="px-6 py-4">Ruangan</th>
                     <th className="px-6 py-4">Tanggal</th>
+                    <th className="px-6 py-4">Jam</th>
+                    <th className="px-6 py-4">Total</th>
                     <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {reservations.map(res => (
-                    <tr key={res.id} className="hover:bg-gray-50/50">
+                  {reservations.map(res => {
+                    let slots = [];
+                    try { slots = JSON.parse(res.timeSlots); } catch(e) {}
+                    return (
+                    <tr key={res.id} className={`hover:bg-gray-50/50 ${res.status === 'Pending' ? 'bg-yellow-50/30' : ''}`}>
                       <td className="px-6 py-4">#{res.id}</td>
-                      <td className="px-6 py-4 font-medium text-gray-900">{getUserName(res.userId)}</td>
-                      <td className="px-6 py-4">{getSpaceName(res.spaceId)}</td>
+                      <td className="px-6 py-4 font-medium text-gray-900">{res.userName || 'Unknown'}</td>
+                      <td className="px-6 py-4">{res.spaceName || 'Unknown'}</td>
                       <td className="px-6 py-4">{res.date}</td>
                       <td className="px-6 py-4">
-                         <button 
-                          onClick={() => toggleReservationStatus(res)}
-                          className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                            res.status === 'Confirmed' ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
-                          }`}
-                        >
-                          {res.status}
-                        </button>
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                          {slots.map((s, i) => (
+                            <span key={i} className="px-1.5 py-0.5 bg-warm-50 text-warm-700 rounded text-[11px] font-medium border border-warm-200 whitespace-nowrap">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 font-semibold text-gray-900">Rp {Number(res.totalPrice || 0).toLocaleString('id-ID')}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadgeClass(res.status)}`}>
+                          {getStatusLabel(res.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex justify-end gap-2">
+                          {res.status === 'Pending' && (
+                            <>
+                              <button
+                                onClick={() => updateReservationStatus(res, 'Confirmed')}
+                                className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 transition-colors"
+                              >
+                                ✓ Konfirmasi
+                              </button>
+                              <button
+                                onClick={() => updateReservationStatus(res, 'Cancelled')}
+                                className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600 transition-colors"
+                              >
+                                ✕ Batalkan
+                              </button>
+                            </>
+                          )}
+                          {res.status === 'Confirmed' && (
+                            <button
+                              onClick={() => updateReservationStatus(res, 'Cancelled')}
+                              className="px-3 py-1.5 border border-red-200 text-red-600 rounded-lg text-xs font-medium hover:bg-red-50 transition-colors"
+                            >
+                              Batalkan
+                            </button>
+                          )}
+                          {res.status === 'Cancelled' && (
+                            <button
+                              onClick={() => updateReservationStatus(res, 'Confirmed')}
+                              className="px-3 py-1.5 border border-green-200 text-green-600 rounded-lg text-xs font-medium hover:bg-green-50 transition-colors"
+                            >
+                              Aktifkan Ulang
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
-                  ))}
+                  ); })}
                   {reservations.length === 0 && (
-                    <tr><td colSpan="5" className="px-6 py-8 text-center text-gray-500">Belum ada reservasi.</td></tr>
+                    <tr><td colSpan="8" className="px-6 py-8 text-center text-gray-500">Belum ada reservasi.</td></tr>
                   )}
                 </tbody>
               </table>

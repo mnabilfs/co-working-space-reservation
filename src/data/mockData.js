@@ -1,7 +1,3 @@
-export const users = [
-  { id: 1, username: 'admin', password: 'password', role: 'admin', name: 'Admin Utama' },
-  { id: 2, username: 'user', password: 'password', role: 'user', name: 'Pengguna Biasa' }
-];
 
 export const coworkingSpaces = [
   {
